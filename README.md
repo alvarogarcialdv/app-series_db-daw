@@ -1,5 +1,7 @@
 # app_series
-Aplicación PHP para añadir, borrar y consultar series almacenadas en MariaDB.
+Aplicación PHP sencilla para añadir, borrar y consultar series almacenadas en MariaDB.
+
+El proyecto tiene fines didácticos y sirve como ejemplo básico de una aplicación PHP conectada a una base de datos MariaDB.
 
 ## Requisitos
 
