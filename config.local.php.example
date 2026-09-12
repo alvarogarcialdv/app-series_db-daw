@@ -1,0 +1,7 @@
+<?php
+return [
+    'host' => '127.0.0.1',
+    'usuario' => 'app_user',
+    'password' => 'cambia-esta-contraseña',
+    'nombre' => 'app_series',
+];
