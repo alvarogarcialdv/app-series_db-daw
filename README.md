@@ -1,4 +1,4 @@
-# app-series-daw
+# app-series_db-daw
 
 Aplicación web sencilla desarrollada en **PHP** para gestionar una colección de series almacenada en **MariaDB o MySQL**.
 
@@ -38,7 +38,7 @@ La extensión `mbstring` es recomendable para trabajar correctamente con la long
 ## Estructura del proyecto
 
 ```text
-app-series-daw/
+app-series_db-daw/
 ├── .gitignore
 ├── config.local.php.example
 ├── db/
@@ -65,8 +65,8 @@ app-series-daw/
 Clona el repositorio:
 
 ```bash
-git clone https://github.com/alvarogarcialdv/app-series-daw.git
-cd app-series-daw
+git clone https://github.com/alvarogarcialdv/app-series_db-daw.git
+cd app-series_db-daw
 ```
 
 También puedes descargar el repositorio y copiar sus archivos manualmente al servidor.
@@ -76,7 +76,7 @@ También puedes descargar el repositorio y copiar sus archivos manualmente al se
 Accede a MariaDB/MySQL con un usuario con permisos suficientes y crea la base de datos:
 
 ```sql
-CREATE DATABASE app_series
+CREATE DATABASE `app-series_db-daw`
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 ```
@@ -84,7 +84,7 @@ CREATE DATABASE app_series
 Después importa el script incluido en el proyecto:
 
 ```bash
-mysql -u usuario -p app_series < db/series.sql
+mysql -u usuario -p `app-series_db-daw` < db/series.sql
 ```
 
 El script crea la tabla `series` e introduce varios registros de ejemplo.
@@ -110,7 +110,7 @@ CREATE USER 'app_user'@'localhost'
 IDENTIFIED BY 'cambia-esta-contraseña';
 
 GRANT SELECT, INSERT, DELETE
-ON app_series.*
+ON `app-series_db-daw`.*
 TO 'app_user'@'localhost';
 ```
 
@@ -141,7 +141,7 @@ Es la opción recomendada para servidores propios, contenedores y plataformas cl
 export BD_HOST=127.0.0.1
 export BD_USUARIO=app_user
 export BD_PASSWORD='contraseña-segura'
-export BD_NOMBRE=app_series
+export BD_NOMBRE=app-series_db-daw
 ```
 
 La forma concreta de definir las variables depende del sistema operativo, servidor o plataforma utilizada.
@@ -171,7 +171,7 @@ return [
     'host' => '127.0.0.1',
     'usuario' => 'app_user',
     'password' => 'contraseña-segura',
-    'nombre' => 'app_series',
+    'nombre' => 'app-series_db-daw',
 ];
 ```
 
@@ -197,7 +197,7 @@ Crea después un archivo `.env` en la raíz del proyecto:
 BD_HOST=127.0.0.1
 BD_USUARIO=app_user
 BD_PASSWORD=contraseña-segura
-BD_NOMBRE=app_series
+BD_NOMBRE=app-series_db-daw
 ```
 
 La aplicación cargará automáticamente `.env` cuando encuentre `vendor/autoload.php` y esté disponible `vlucas/phpdotenv`.
@@ -239,7 +239,7 @@ Configura `src` como **directorio público** de la aplicación.
 Una estructura recomendada sería:
 
 ```text
-/ruta/app-series-daw/
+/ruta/app-series_db-daw/
 ├── config.local.php          # no público
 ├── db/                       # no público
 ├── README.md                 # no público
