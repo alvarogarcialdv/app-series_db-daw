@@ -1,124 +1,197 @@
 # app-series-daw
-Aplicación PHP sencilla para añadir, borrar y consultar series almacenadas en MariaDB.
 
-El proyecto tiene fines didácticos y sirve como ejemplo básico de una aplicación PHP conectada a una base de datos MariaDB.
+Aplicación web sencilla desarrollada en **PHP** para gestionar una colección de series almacenada en **MariaDB o MySQL**.
+
+El proyecto tiene fines didácticos y sirve como ejemplo básico de una aplicación PHP conectada a una base de datos mediante `mysqli`.
+
+## Funcionalidades
+
+La aplicación permite:
+
+* Consultar las series almacenadas.
+* Añadir nuevas series indicando título y género.
+* Eliminar una serie mediante su identificador.
+
+También incorpora algunas medidas básicas de seguridad:
+
+* Consultas preparadas.
+* Validación de los datos recibidos.
+* Escape de la salida HTML.
+* Protección CSRF en los formularios.
+* Cookies de sesión con `HttpOnly` y `SameSite=Lax`.
+* Mensajes de error genéricos para evitar mostrar información sensible.
+
+> [!IMPORTANT]
+> La aplicación **no incluye autenticación de usuarios**. Está pensada principalmente con fines didácticos y no debe exponerse directamente a Internet sin añadir autenticación y revisar su seguridad para un entorno de producción.
 
 ## Requisitos
 
-- PHP 8.0 o superior con la extensión `mysqli` (`mbstring` es recomendable).
-- MariaDB o MySQL.
+* PHP 8.0 o superior.
+* Extensión PHP `mysqli`.
+* MariaDB o MySQL.
+* Un servidor web compatible con PHP.
 
-## Despliegue
+La extensión `mbstring` es recomendable para trabajar correctamente con la longitud de cadenas UTF-8, aunque la aplicación puede funcionar sin ella.
 
-### Directorio público
+**Composer no es obligatorio.** Solo es necesario si se desea utilizar un archivo `.env` mediante `vlucas/phpdotenv`.
 
-El único directorio que debe quedar expuesto por el servidor web es `src`.
-Configura `src` como `DocumentRoot` o como directorio público del sitio. La raíz del proyecto no debe ser accesible directamente, ya que contiene archivos de configuración, ejemplos de credenciales, documentación y el script SQL.
-
-Una estructura recomendada en el servidor sería:
+## Estructura del proyecto
 
 ```text
-/ruta/app-series-daw/
-├── config.local.php
+app-series-daw/
+├── .gitignore
+├── config.local.php.example
 ├── db/
+│   └── series.sql
 ├── README.md
-└── src/                 <- único directorio público
-	├── config.php
-	├── index.php
-	└── styles.css
+└── src/
+    ├── config.php
+    ├── index.php
+    └── styles.css
 ```
 
-Si el hosting no permite configurar `src` como directorio público, coloca la aplicación fuera de la carpeta pública y configura el servidor para publicar únicamente ese directorio. Como mínimo, bloquea el acceso HTTP a `.env`, `config.local.php`, `db/` y los archivos de configuración.
+| Ruta                       | Descripción                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| `src/index.php`            | Interfaz y lógica principal de la aplicación.                        |
+| `src/config.php`           | Carga la configuración y establece la conexión con la base de datos. |
+| `src/styles.css`           | Estilos de la interfaz.                                              |
+| `db/series.sql`            | Crea la tabla `series` e inserta datos iniciales.                    |
+| `config.local.php.example` | Ejemplo de archivo de configuración local.                           |
 
-### 1. Preparación de la base de datos
+## Instalación
 
-Antes de subir la aplicación, crea una base de datos para el proyecto con codificación `utf8mb4`.
+### 1. Obtener el proyecto
 
-Después, ejecuta el contenido de `db/series.sql` sobre esa base de datos para crear la tabla `series` y cargar los datos iniciales.
+Clona el repositorio:
 
-Crea un usuario específico para la aplicación y concédele permisos únicamente sobre la base de datos creada. No utilices el usuario administrador de MariaDB/MySQL para la aplicación. Como mínimo, el usuario necesita permisos para consultar, insertar y eliminar registros en la tabla `series`.
+```bash
+git clone https://github.com/alvarogarcialdv/app-series-daw.git
+cd app-series-daw
+```
 
-La base de datos y el usuario deben estar disponibles desde el servidor donde se ejecuta PHP. Guarda el nombre de la base de datos, el host, el usuario y la contraseña, ya que se utilizarán en la configuración posterior.
+También puedes descargar el repositorio y copiar sus archivos manualmente al servidor.
 
-### 2. Subida de los archivos
+### 2. Crear la base de datos
 
-Sube los archivos del proyecto al servidor mediante el método que proporcione el hosting, por ejemplo FTP, SFTP, Git o un sistema de despliegue automatizado.
+Accede a MariaDB/MySQL con un usuario con permisos suficientes y crea la base de datos:
 
-La carpeta pública del sitio debe ser únicamente `src`. El resto del proyecto debe quedar fuera del acceso directo por HTTP:
+```sql
+CREATE DATABASE app_series
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+```
 
-- `db/`, que contiene el script SQL.
-- `config.local.php` y `.env`, que pueden contener credenciales.
-- `vendor/`, `composer.json` y `composer.lock`, cuando se utilice Composer.
-- `README.md` y cualquier otro archivo de desarrollo.
+Después importa el script incluido en el proyecto:
 
-Si se utiliza la opción `.env`, asegúrate de que `vendor/autoload.php` esté disponible en la raíz del proyecto. Si el servidor no tiene Composer, prepara las dependencias previamente y sube la carpeta `vendor/`.
+```bash
+mysql -u usuario -p app_series < db/series.sql
+```
 
-### 3. Configuración de la aplicación
+El script crea la tabla `series` e introduce varios registros de ejemplo.
 
-El archivo `src/config.php` contiene la lógica de configuración y conexión, pero no debe editarse para introducir contraseñas. Lee estos cuatro valores:
+La tabla contiene los siguientes campos:
 
-| Variable | Significado |
-| --- | --- |
-| `BD_HOST` | Servidor o dirección de MariaDB/MySQL |
-| `BD_USUARIO` | Usuario de la base de datos |
-| `BD_PASSWORD` | Contraseña del usuario |
-| `BD_NOMBRE` | Nombre de la base de datos |
+| Campo    | Tipo           | Descripción                                      |
+| -------- | -------------- | ------------------------------------------------ |
+| `id`     | `INT`          | Identificador, clave primaria y autoincremental. |
+| `titulo` | `VARCHAR(255)` | Título de la serie. Obligatorio y único.         |
+| `genero` | `VARCHAR(100)` | Género de la serie. Opcional.                    |
 
-`config.php` busca los valores en este orden:
+El título de una serie no puede repetirse debido a la restricción `UNIQUE` definida sobre ese campo.
 
-1. Variables de entorno del servidor.
-2. Variables cargadas desde `.env`, si está instalado `vlucas/phpdotenv`.
-3. El archivo indicado por `SERIES_CONFIG_FILE`.
-4. `config.local.php` en la raíz del proyecto.
-5. `src/config.local.php` como alternativa final.
+### 3. Crear un usuario para la aplicación
 
-Las variables de entorno tienen prioridad sobre los archivos locales. Si falta cualquiera de los cuatro valores, la aplicación no inicia la conexión y muestra un mensaje genérico sin revelar credenciales.
+Se recomienda utilizar un usuario específico para la aplicación en lugar de conectar PHP con un usuario administrador de MariaDB/MySQL.
 
-Elige una de estas opciones según las posibilidades del servidor. Si se combinan, las variables de entorno tienen prioridad.
+Por ejemplo:
+
+```sql
+CREATE USER 'app_user'@'localhost'
+IDENTIFIED BY 'cambia-esta-contraseña';
+
+GRANT SELECT, INSERT, DELETE
+ON app_series.*
+TO 'app_user'@'localhost';
+```
+
+Estos permisos son suficientes para el funcionamiento normal de la aplicación una vez creada la base de datos.
+
+Adapta el host del usuario a la configuración de tu entorno si PHP y MariaDB/MySQL se ejecutan en sistemas diferentes.
+
+## Configuración
+
+No introduzcas credenciales directamente en `src/config.php`.
+
+La aplicación necesita cuatro parámetros:
+
+| Variable      | Descripción                                |
+| ------------- | ------------------------------------------ |
+| `BD_HOST`     | Servidor donde se encuentra MariaDB/MySQL. |
+| `BD_USUARIO`  | Usuario utilizado por la aplicación.       |
+| `BD_PASSWORD` | Contraseña del usuario.                    |
+| `BD_NOMBRE`   | Nombre de la base de datos.                |
+
+La configuración puede proporcionarse mediante cualquiera de las siguientes opciones.
 
 ### Opción A: variables de entorno
 
-Es la opción recomendada en servidores propios, contenedores y servicios cloud:
+Es la opción recomendada para servidores propios, contenedores y plataformas cloud.
 
-	```bash
-	export BD_HOST=127.0.0.1
-	export BD_USUARIO=usuario
-	export BD_PASSWORD='contraseña'
-	export BD_NOMBRE=app_series
-	```
+```bash
+export BD_HOST=127.0.0.1
+export BD_USUARIO=app_user
+export BD_PASSWORD='contraseña-segura'
+export BD_NOMBRE=app_series
+```
 
-### Opción B: archivo local fuera de `src`
+La forma concreta de definir las variables depende del sistema operativo, servidor o plataforma utilizada.
 
-Es adecuada para un hosting compartido que no permita definir variables de entorno:
+### Opción B: `config.local.php`
 
-1. Copia `config.local.php.example` como `config.local.php` en la raíz del proyecto.
-2. Edita sus valores con las credenciales reales.
-3. Si es posible, coloca ese archivo fuera del directorio público o configura el sitio para que solo `src` sea público.
-4. No lo subas a Git ni lo publiques como un archivo descargable.
+Es una opción sencilla para desarrollo local o entornos donde no sea posible definir variables de entorno.
 
-También puedes usar una ruta personalizada mediante `SERIES_CONFIG_FILE` cuando el servidor sí permita definir esa única variable.
+Copia:
 
-Si la aplicación está detrás de un proxy HTTPS, define `APP_TRUST_PROXY_HTTPS=1` en el entorno del servidor, antes de iniciar PHP, únicamente cuando el proxy sea de confianza y envíe correctamente `X-Forwarded-Proto: https`.
+```text
+config.local.php.example
+```
+
+como:
+
+```text
+config.local.php
+```
+
+en la raíz del proyecto y modifica sus valores:
+
+```php
+<?php
+
+return [
+    'host' => '127.0.0.1',
+    'usuario' => 'app_user',
+    'password' => 'contraseña-segura',
+    'nombre' => 'app_series',
+];
+```
+
+`config.local.php` está incluido en `.gitignore` y no debe almacenarse en el repositorio.
+
+También puede utilizarse un archivo ubicado en otra ruta indicando su ubicación mediante la variable:
+
+```text
+SERIES_CONFIG_FILE
+```
 
 ### Opción C: archivo `.env`
 
-Es habitual en proyectos PHP con Composer. Instala `vlucas/phpdotenv` en la raíz del proyecto durante la preparación del despliegue:
+Para utilizar un archivo `.env`, instala `vlucas/phpdotenv`:
 
 ```bash
 composer require vlucas/phpdotenv
 ```
 
-Este comando crea o actualiza `composer.json` y `composer.lock`; ambos archivos deben conservarse en el repositorio para que el despliegue sea reproducible.
-
-En el servidor, instala únicamente las dependencias de producción:
-
-```bash
-composer install --no-dev
-```
-
-Si el hosting no tiene Composer, ejecuta ambos comandos localmente y sube también la carpeta `vendor/` junto con la aplicación.
-
-Crea `.env` con este contenido:
+Crea después un archivo `.env` en la raíz del proyecto:
 
 ```env
 BD_HOST=127.0.0.1
@@ -127,8 +200,114 @@ BD_PASSWORD=contraseña-segura
 BD_NOMBRE=app_series
 ```
 
-La aplicación lo cargará automáticamente cuando encuentre `vendor/autoload.php`. Añade `.env` a `.gitignore` y no lo guardes en un directorio público si puedes evitarlo.
+La aplicación cargará automáticamente `.env` cuando encuentre `vendor/autoload.php` y esté disponible `vlucas/phpdotenv`.
 
-Cuando sea posible, configura el servidor web con `src` como directorio público (`DocumentRoot`). Así `config.local.php`, `.env` y el resto de archivos del proyecto quedan fuera del acceso directo por HTTP.
+En un entorno de producción pueden instalarse únicamente las dependencias necesarias mediante:
 
-La aplicación incluye consultas preparadas, validación de entradas, escape de salida y protección CSRF. No incluye autenticación de usuarios, por lo que no debe exponerse directamente a Internet sin añadirla.
+```bash
+composer install --no-dev
+```
+
+Si el servidor no dispone de Composer, las dependencias pueden instalarse previamente y desplegarse junto con la carpeta `vendor/`.
+
+Los archivos `.env` y `config.local.php`, así como `vendor/`, están excluidos del repositorio mediante `.gitignore`.
+
+### Prioridad de configuración
+
+La aplicación carga primero, si está disponible, el archivo `.env`.
+
+Después busca un archivo PHP de configuración en este orden:
+
+1. Archivo indicado mediante `SERIES_CONFIG_FILE`.
+2. `config.local.php` en la raíz del proyecto.
+3. `src/config.local.php` como alternativa.
+
+Finalmente, los valores definidos mediante `BD_HOST`, `BD_USUARIO`, `BD_PASSWORD` y `BD_NOMBRE` en el entorno tienen prioridad sobre los valores obtenidos de los archivos de configuración.
+
+Si falta alguno de los cuatro parámetros obligatorios, la aplicación devuelve un error HTTP 500 y no intenta establecer la conexión con la base de datos.
+
+## Directorio público
+
+El único directorio que debe quedar accesible mediante el servidor web es:
+
+```text
+src/
+```
+
+Configura `src` como **directorio público** de la aplicación.
+
+Una estructura recomendada sería:
+
+```text
+/ruta/app-series-daw/
+├── config.local.php          # no público
+├── db/                       # no público
+├── README.md                 # no público
+├── vendor/                   # no público, si se utiliza Composer
+└── src/                      # directorio público
+    ├── config.php
+    ├── index.php
+    └── styles.css
+```
+
+De esta forma quedan fuera del acceso HTTP:
+
+* Las credenciales de conexión.
+* El archivo `.env`.
+* El script SQL.
+* Las dependencias de Composer.
+* La documentación y otros archivos del proyecto.
+
+Si el entorno utilizado no permite establecer `src` como directorio público, deben aplicarse las medidas necesarias para impedir el acceso HTTP a los archivos y directorios sensibles.
+
+## HTTPS y proxies inversos
+
+La aplicación marca la cookie de sesión como `Secure` cuando detecta una conexión HTTPS.
+
+Si PHP se ejecuta detrás de un **proxy inverso de confianza** que termina la conexión TLS, puede habilitarse el reconocimiento de `X-Forwarded-Proto` mediante:
+
+```text
+APP_TRUST_PROXY_HTTPS=1
+```
+
+Activa esta opción únicamente cuando el proxy sea de confianza y envíe correctamente:
+
+```text
+X-Forwarded-Proto: https
+```
+
+## Consideraciones de seguridad
+
+El proyecto incluye algunas protecciones básicas adecuadas para su finalidad didáctica:
+
+* Consultas preparadas para las operaciones parametrizadas.
+* Validación de los datos recibidos.
+* Escape de datos antes de mostrarlos en HTML.
+* Protección CSRF en las operaciones de inserción y borrado.
+* Cookies de sesión con `HttpOnly` y `SameSite=Lax`.
+* Uso de `Secure` en la cookie cuando se utiliza HTTPS.
+* Registro interno de errores de base de datos sin mostrarlos directamente al usuario.
+* Separación entre archivos públicos y archivos de configuración.
+* Uso recomendado de un usuario de base de datos con permisos limitados.
+
+La aplicación **no incluye autenticación ni autorización**, por lo que no está preparada para exponerse directamente a Internet tal como se encuentra.
+
+## Objetivo didáctico
+
+El proyecto permite trabajar conceptos como:
+
+* Aplicaciones PHP conectadas a MariaDB/MySQL.
+* Uso de `mysqli`.
+* Operaciones SQL `SELECT`, `INSERT` y `DELETE`.
+* Consultas preparadas.
+* Formularios HTML y procesamiento de peticiones `POST`.
+* Validación de datos.
+* Escape de salida HTML.
+* Sesiones.
+* Protección CSRF.
+* Separación entre código y configuración.
+* Variables de entorno.
+* Archivos de configuración local.
+* Uso opcional de `.env` y Composer.
+* Separación entre directorio público y archivos internos.
+* Principios básicos de despliegue y seguridad.
