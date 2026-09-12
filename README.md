@@ -30,7 +30,30 @@ Una estructura recomendada en el servidor sería:
 
 Si el hosting no permite configurar `src` como directorio público, coloca la aplicación fuera de la carpeta pública y configura el servidor para publicar únicamente ese directorio. Como mínimo, bloquea el acceso HTTP a `.env`, `config.local.php`, `db/` y los archivos de configuración.
 
-### Configuración de la base de datos
+### 1. Preparación de la base de datos
+
+Antes de subir la aplicación, crea una base de datos para el proyecto con codificación `utf8mb4`.
+
+Después, ejecuta el contenido de `db/series.sql` sobre esa base de datos para crear la tabla `series` y cargar los datos iniciales.
+
+Crea un usuario específico para la aplicación y concédele permisos únicamente sobre la base de datos creada. No utilices el usuario administrador de MariaDB/MySQL para la aplicación. Como mínimo, el usuario necesita permisos para consultar, insertar y eliminar registros en la tabla `series`.
+
+La base de datos y el usuario deben estar disponibles desde el servidor donde se ejecuta PHP. Guarda el nombre de la base de datos, el host, el usuario y la contraseña, ya que se utilizarán en la configuración posterior.
+
+### 2. Subida de los archivos
+
+Sube los archivos del proyecto al servidor mediante el método que proporcione el hosting, por ejemplo FTP, SFTP, Git o un sistema de despliegue automatizado.
+
+La carpeta pública del sitio debe ser únicamente `src`. El resto del proyecto debe quedar fuera del acceso directo por HTTP:
+
+- `db/`, que contiene el script SQL.
+- `config.local.php` y `.env`, que pueden contener credenciales.
+- `vendor/`, `composer.json` y `composer.lock`, cuando se utilice Composer.
+- `README.md` y cualquier otro archivo de desarrollo.
+
+Si se utiliza la opción `.env`, asegúrate de que `vendor/autoload.php` esté disponible en la raíz del proyecto. Si el servidor no tiene Composer, prepara las dependencias previamente y sube la carpeta `vendor/`.
+
+### 3. Configuración de la aplicación
 
 El archivo `src/config.php` contiene la lógica de configuración y conexión, pero no debe editarse para introducir contraseñas. Lee estos cuatro valores:
 
@@ -51,19 +74,7 @@ El archivo `src/config.php` contiene la lógica de configuración y conexión, p
 
 Las variables de entorno tienen prioridad sobre los archivos locales. Si falta cualquiera de los cuatro valores, la aplicación no inicia la conexión y muestra un mensaje genérico sin revelar credenciales.
 
-1. Crea la base de datos:
-
-	```sql
-	CREATE DATABASE app_series CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-	```
-
-2. Carga la tabla y los datos iniciales:
-
-	```bash
-	mysql -u usuario -p app_series < db/series.sql
-	```
-
-3. Configura la conexión usando una de estas opciones. Si se combinan, las variables de entorno tienen prioridad.
+Elige una de estas opciones según las posibilidades del servidor. Si se combinan, las variables de entorno tienen prioridad.
 
 ### Opción A: variables de entorno
 
