@@ -10,6 +10,47 @@ El proyecto tiene fines didácticos y sirve como ejemplo básico de una aplicaci
 
 ## Despliegue
 
+### Directorio público
+
+El único directorio que debe quedar expuesto por el servidor web es `src`.
+Configura `src` como `DocumentRoot` o como directorio público del sitio. La raíz del proyecto no debe ser accesible directamente, ya que contiene archivos de configuración, ejemplos de credenciales, documentación y el script SQL.
+
+Una estructura recomendada en el servidor sería:
+
+```text
+/ruta/app-series-daw/
+├── config.local.php
+├── db/
+├── README.md
+└── src/                 <- único directorio público
+	├── config.php
+	├── index.php
+	└── styles.css
+```
+
+Si el hosting no permite configurar `src` como directorio público, coloca la aplicación fuera de la carpeta pública y configura el servidor para publicar únicamente ese directorio. Como mínimo, bloquea el acceso HTTP a `.env`, `config.local.php`, `db/` y los archivos de configuración.
+
+### Configuración de la base de datos
+
+El archivo `src/config.php` contiene la lógica de configuración y conexión, pero no debe editarse para introducir contraseñas. Lee estos cuatro valores:
+
+| Variable | Significado |
+| --- | --- |
+| `BD_HOST` | Servidor o dirección de MariaDB/MySQL |
+| `BD_USUARIO` | Usuario de la base de datos |
+| `BD_PASSWORD` | Contraseña del usuario |
+| `BD_NOMBRE` | Nombre de la base de datos |
+
+`config.php` busca los valores en este orden:
+
+1. Variables de entorno del servidor.
+2. Variables cargadas desde `.env`, si está instalado `vlucas/phpdotenv`.
+3. El archivo indicado por `SERIES_CONFIG_FILE`.
+4. `config.local.php` en la raíz del proyecto.
+5. `src/config.local.php` como alternativa final.
+
+Las variables de entorno tienen prioridad sobre los archivos locales. Si falta cualquiera de los cuatro valores, la aplicación no inicia la conexión y muestra un mensaje genérico sin revelar credenciales.
+
 1. Crea la base de datos:
 
 	```sql
@@ -56,6 +97,8 @@ Es habitual en proyectos PHP con Composer. Instala `vlucas/phpdotenv` en la raí
 composer require vlucas/phpdotenv
 ```
 
+Este comando crea o actualiza `composer.json` y `composer.lock`; ambos archivos deben conservarse en el repositorio para que el despliegue sea reproducible.
+
 En el servidor, instala únicamente las dependencias de producción:
 
 ```bash
@@ -74,5 +117,7 @@ BD_NOMBRE=app_series
 ```
 
 La aplicación lo cargará automáticamente cuando encuentre `vendor/autoload.php`. Añade `.env` a `.gitignore` y no lo guardes en un directorio público si puedes evitarlo.
+
+Cuando sea posible, configura el servidor web con `src` como directorio público (`DocumentRoot`). Así `config.local.php`, `.env` y el resto de archivos del proyecto quedan fuera del acceso directo por HTTP.
 
 La aplicación incluye consultas preparadas, validación de entradas, escape de salida y protección CSRF. No incluye autenticación de usuarios, por lo que no debe exponerse directamente a Internet sin añadirla.
