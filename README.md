@@ -21,7 +21,7 @@ También incorpora algunas medidas básicas de seguridad:
 * Cookies de sesión con `HttpOnly` y `SameSite=Lax`.
 * Mensajes de error genéricos para evitar mostrar información sensible.
 
-> [!IMPORTANT]
+> [!IMPORTANTE]
 > La aplicación **no incluye autenticación de usuarios**. Está pensada principalmente con fines didácticos y no debe exponerse directamente a Internet sin añadir autenticación y revisar su seguridad para un entorno de producción.
 
 ## Requisitos
@@ -58,7 +58,7 @@ app-series_db-daw/
 | `db/series.sql`            | Crea la tabla `series` e inserta datos iniciales.                    |
 | `config.local.php.example` | Ejemplo de archivo de configuración local.                           |
 
-## Instalación
+## Despliegue
 
 ### 1. Obtener el proyecto
 
